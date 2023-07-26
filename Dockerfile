@@ -8,5 +8,6 @@ WORKDIR /app/
 COPY . .
 
 RUN pip3 install poetry \
-    && poetry install
+    && poetry install --no-dev && \
+    poetry config virtualenvs.create false
 
