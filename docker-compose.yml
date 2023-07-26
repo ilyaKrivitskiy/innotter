@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+
+  #db:
+
+  innotter_project:
+    image: innotter:latest
+    container_name: innotter
+    #depends_on:
+      #- db
+    #env_file:
+      #- .env
