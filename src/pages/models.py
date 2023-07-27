@@ -12,10 +12,12 @@ class Page(models.Model):
     is_private = models.BooleanField(default=False)
     follow_requests = models.ManyToManyField('users.User', related_name='requests')
     unblock_date = models.DateTimeField(null=True, blank=True)
+    objects = models.Manager()
 
 
 class Tag(models.Model):
     name = models.CharField(max_length=30, unique=True)
+    objects = models.Manager()
 
 
 class Post(models.Model):
@@ -24,3 +26,4 @@ class Post(models.Model):
     reply_to = models.ForeignKey('pages.Post', on_delete=models.SET_NULL, null=True, related_name='replies')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    objects = models.Manager()
