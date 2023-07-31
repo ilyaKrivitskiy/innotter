@@ -5,7 +5,16 @@ from users.models import User
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'role', 'title', 'is_blocked', 'is_superuser', 'is_staff']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name',
+                  'role', 'title', 'is_blocked',
+                  'is_superuser', 'is_staff']
+
+        extra_kwargs = {
+            'email': {'read_only': True},
+            'is_blocked': {'read_only': True},
+            'is_superuser': {'read_only': True},
+            'is_staff': {'read_only': True},
+        }
 
 
 class UserSignUpSerializer(serializers.ModelSerializer):
@@ -14,6 +23,6 @@ class UserSignUpSerializer(serializers.ModelSerializer):
         fields = ['username', 'password']
 
         extra_kwargs = {
-            'username': {'write_only': True},
-            'password': {'write_only': True}
+            'username': {'required': True},
+            'password': {'required': True}
         }
