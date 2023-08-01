@@ -41,6 +41,12 @@ class IsOwnerOrReadOnly(CustomPermission):
         return obj == request.user
 
 
+class IsNotBlocked(CustomPermission):
+
+    def has_object_permission(self, request: Request, view, obj):
+        return not obj.is_blocked
+
+
 class IsStaffUser(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
