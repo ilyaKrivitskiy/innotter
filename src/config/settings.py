@@ -30,6 +30,7 @@ DEBUG = os.environ.get("DEBUG")
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
+REFRESH_TOKEN_SECRET = os.environ.get('REFRESH_TOKEN_SECRET')
 
 # Application definition
 
@@ -53,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    #'config.middleware.AuthMiddleware'
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -133,3 +135,15 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = "users.User"
+
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ORIGIN_WHITELIST = [
+    'http://localhost:3000'
+]
+
+# REST_FRAMEWORK = {
+#     # 'DEFAULT_AUTHENTICATION_CLASSES': (
+#     #     'users.authentication.CustomJWTAuthentication',
+#     # )
+# }

@@ -23,6 +23,7 @@ from pages.urls import page_router
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
     path('api/v1/', include(user_router.urls)),
     path('api/v1/', include(page_router.urls))
 ]
