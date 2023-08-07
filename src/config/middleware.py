@@ -24,22 +24,13 @@ class AuthMiddleware(MiddlewareMixin):
             if refresh_token is None:
                 raise exceptions.AuthenticationFailed(
                     'Authentication credentials were not provided.')
-            try:
-                payload = jwt.decode(refresh_token, REFRESH_TOKEN_SECRET, algorithms=['HS256'])
-                user = User.objects.filter(id=payload.get('user_id')).first()
-                if user is None:
-                    raise exceptions.AuthenticationFailed('User not found')
-
-                if not user.is_active:
-                    raise exceptions.AuthenticationFailed('User is inactive')
-                return None
-            except jwt.ExpiredSignatureError:
-                raise exceptions.AuthenticationFailed('expired refresh token, please login again.')
+            return validate_jwt_token(request, User, refresh_token)
         else:
             authorization_header = request.headers.get('Authorization', None)
+            access_token = authorization_header.split(' ')[1]
             logger.info(f"Request received for endpoint {str(request.path)}")
             if authorization_header:
-                return validate_jwt_token(request, User, authorization_header)
+                return validate_jwt_token(request, User, access_token)
             else:
                 response = create_response(
                     "", 401, {"message": "Authorization not found, Please send valid token in headers"}

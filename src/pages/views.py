@@ -1,9 +1,11 @@
 from django.shortcuts import render
-from rest_framework import viewsets
+from rest_framework import viewsets, status
 from django.shortcuts import get_object_or_404
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from users import permissions
+from users.authentication import JWTAuthentication
+from users.permissions import IsNotBlocked
 from .serializers import PageSerializer, TagSerializer, PostSerializer
 from .models import Page, Tag, Post
 from rest_framework import mixins
@@ -14,26 +16,44 @@ from rest_framework.request import Request
 class PageViewSet(viewsets.ModelViewSet):
     serializer_class = PageSerializer
     queryset = Page.objects.all()
+    authentication_classes = [JWTAuthentication]
+
     permission_classes_by_action = {
         'list': [permissions.IsStaffUser],
-        'retrieve': [permissions.IsOwnerOrStuffUser],
+        'retrieve': [permissions.IsOwnPageOrStuffUser],
         'create': [IsAuthenticated],
-        'update': [permissions.IsOwnerOrReadOnly],
-        'partial_update': [permissions.IsOwnerOrReadOnly],
-        'destroy': [permissions.IsOwnerOrReadOnly],
+        'update': [permissions.IsOwnPageOrReadOnly],
+        'partial_update': [permissions.IsOwnPageOrReadOnly],
+        'destroy': [permissions.IsOwnPageOrReadOnly],
         'change_block': [permissions.IsStaffUser],
         'change_block_permanent': [permissions.IsAdminRole],
-        'change_access': [permissions.IsOwnerOrReadOnly]
+        'change_access': [permissions.IsOwnPageOrReadOnly],
+        'follow': [IsNotBlocked]
     }
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+    @action(detail=True, methods=['patch'])
+    def follow(self, request: Request, pk=None):
+        page = get_object_or_404(Page, pk=pk)
+        user = request.user
+        if user == page.owner:
+            return Response(data="You cant follow yourself!", status=status.HTTP_403_FORBIDDEN)
+        if page.is_private:
+            page.follow_requests.add(user)
+            page.save()
+            return Response("Your request had send!")
+        page.followers.add(user)
+        page.save()
+        return Response("You are following this page now!")
 
     @action(detail=True, methods=['patch'])
     def change_access(self, request: Request, pk=None):
         page = get_object_or_404(Page, pk=pk)
-        serializer = PageSerializer(page, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        page.is_private = request.data["is_private"]
+        page.is_private = False if page.is_private else True
         page.save(update_fields=["is_private"])
-        return Response(f'Private: {request.data}')
+        return Response({"is_private": page.is_private})
 
     @action(detail=True, methods=['patch'])
     def change_block(self, request: Request, pk=None):
@@ -70,6 +90,7 @@ class PageViewSet(viewsets.ModelViewSet):
 class TagViewSet(viewsets.ModelViewSet):
     serializer_class = PageSerializer
     queryset = Tag.objects.all()
+    authentication_classes = [JWTAuthentication]
     permission_classes_by_action = {
         'create': [IsAuthenticated],
         'update': [permissions.IsOwnerOrReadOnly],
@@ -86,6 +107,7 @@ class TagViewSet(viewsets.ModelViewSet):
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     queryset = Tag.objects.all()
+    authentication_classes = [JWTAuthentication]
 
     permission_classes_by_action = {
         'create': [permissions.IsOwnerOrReadOnly],

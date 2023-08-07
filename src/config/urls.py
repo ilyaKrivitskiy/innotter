@@ -17,13 +17,22 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 from rest_framework import routers
+from rest_framework.routers import DefaultRouter
 from users.urls import user_router
 from pages.urls import page_router
+import users
+import pages
+from users.views import RegisterAPIView, LoginAPIView, RefreshTokenAPIView, LogoutAPIView
 
+router = DefaultRouter(trailing_slash=False)
+router.registry.extend(user_router.registry)
+router.registry.extend(page_router.registry)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-
-    path('api/v1/', include(user_router.urls)),
-    path('api/v1/', include(page_router.urls))
+    path('api/v1/', include(router.urls)),
+    path('register', RegisterAPIView.as_view()),
+    path('login', LoginAPIView.as_view()),
+    path('refresh', RefreshTokenAPIView.as_view()),
+    path('logout', LogoutAPIView.as_view())
 ]
