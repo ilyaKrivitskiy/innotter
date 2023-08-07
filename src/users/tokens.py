@@ -19,10 +19,9 @@ def create_response(request_id, code, message):
         logger.error(f'create_response:{creation_error}')
 
 
-def validate_jwt_token(request, user, authorization_header):
+def validate_jwt_token(request, user, token):
     try:
-        access_token = authorization_header.split(' ')[1]
-        payload = jwt.decode(access_token, settings.SECRET_KEY, algorithms=['HS256'])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
         user_by_id = user.objects.filter(id=payload['user_id']).first()
         if user_by_id is None:
             raise exceptions.AuthenticationFailed('User not found')
@@ -31,6 +30,7 @@ def validate_jwt_token(request, user, authorization_header):
         return None
 
     except jwt.ExpiredSignatureError:
+
         response = create_response("", 401, {"message": "Authentication token has expired"})
         logger.info(f"Response {response}")
         return HttpResponse(json.dumps(response), status=401)
@@ -44,7 +44,7 @@ def generate_access_token(user):
 
     access_token_payload = {
         'user_id': user.id,
-        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, minutes=15),
+        'exp': datetime.datetime.utcnow() + datetime.timedelta(days=0, minutes=60),
         'iat': datetime.datetime.utcnow(),
     }
     access_token = jwt.encode(access_token_payload,
@@ -58,8 +58,6 @@ def generate_refresh_token(user):
         'exp': datetime.datetime.utcnow() + datetime.timedelta(days=7),
         'iat': datetime.datetime.utcnow()
     }
-    print("checkpoint rt 1")
-    print(type(refresh_token_payload), type(settings.REFRESH_TOKEN_SECRET))
     refresh_token = jwt.encode(
         refresh_token_payload, settings.REFRESH_TOKEN_SECRET, algorithm='HS256')
     return refresh_token

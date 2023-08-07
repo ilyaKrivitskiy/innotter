@@ -11,25 +11,25 @@ class CustomPermission(BasePermission):
 class IsSuperUser(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
-        return obj.is_superuser
+        return request.user.is_superuser
 
 
 class IsAdminRole(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
-        return obj.role == "admin"
+        return request.user.role == "admin"
 
 
 class IsModeratorRole(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
-        return obj.role == "moderator"
+        return request.user.role == "moderator"
 
 
 class IsUserRole(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
-        return obj.role == "user"
+        return request.user.role == "user"
 
 
 class IsOwnerOrReadOnly(CustomPermission):
@@ -41,20 +41,34 @@ class IsOwnerOrReadOnly(CustomPermission):
         return obj == request.user
 
 
+class IsOwnPageOrReadOnly(CustomPermission):
+
+    def has_object_permission(self, request: Request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+
+        return obj.owner == request.user
+
+
 class IsNotBlocked(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
-        return not obj.is_blocked
+        return not request.user.is_blocked
 
 
 class IsStaffUser(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
-        return obj.is_staff or obj.role in ("admin", "moderator")
+        return request.user.is_staff or request.user.role in ("admin", "moderator")
 
 
 class IsOwnerOrStuffUser(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
-        return obj.is_staff or obj.role in ("admin", "moderator") or obj == request.user
+        return request.user.is_staff or request.user.role in ("admin", "moderator") or obj == request.user
 
+
+class IsOwnPageOrStuffUser(CustomPermission):
+
+    def has_object_permission(self, request: Request, view, obj):
+        return request.user.is_staff or request.user.role in ("admin", "moderator") or obj.owner == request.user

@@ -20,7 +20,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         try:
             access_token_payload = jwt.decode(access_token, SECRET_KEY, algorithms=["HS256"])
         except jwt.ExpiredSignatureError:
-            raise exceptions.AuthenticationFailed('No such user')
+            raise exceptions.AuthenticationFailed('Access token has expired! Login again or refresh token.')
 
         user = User.objects.filter(id=access_token_payload['user_id']).first()
         return (user, None)
