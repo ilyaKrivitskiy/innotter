@@ -18,7 +18,7 @@ from .tokens import generate_access_token, generate_refresh_token
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by("id").values()
     authentication_classes = [JWTAuthentication]
 
     serializer_classes_by_action = {
@@ -33,8 +33,30 @@ class UserViewSet(viewsets.ModelViewSet):
         'update': [IsOwnerOrReadOnly],
         'partial_update': [IsOwnerOrReadOnly],
         'destroy': [IsSuperUser],
-        'block_user': [IsAdminRole]
+        'block_user': [IsAdminRole],
+        'make_user_admin': [IsSuperUser],
+        'make_user_moderator': [IsAdminRole]
     }
+
+    def perform_create(self, serializer):
+        if self.request.user in ("moderator", "admin"):
+            serializer.save(is_staff=True)
+
+    @action(detail=True, methods=['patch'])
+    def make_user_admin(self, request: Request, pk=None):
+        user = get_object_or_404(User, pk=pk)
+        user.role = user.Roles.ADMIN
+        user.is_staff = True
+        user.save()
+        return Response(data="This user has admin role now!")
+
+    @action(detail=True, methods=['patch'])
+    def make_user_moderator(self, request: Request, pk=None):
+        user = get_object_or_404(User, pk=pk)
+        user.role = user.Roles.MODERATOR
+        user.is_staff = True
+        user.save()
+        return Response(data="This user has moderator role now!")
 
     @action(detail=True, methods=['patch'])
     def block_user(self, request: Request, pk=None):
