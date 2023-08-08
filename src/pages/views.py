@@ -20,7 +20,7 @@ class PageViewSet(viewsets.ModelViewSet):
 
     permission_classes_by_action = {
         'list': [permissions.IsStaffUser],
-        'retrieve': [permissions.IsOwnPageOrStuffUser],
+        'retrieve': [permissions.IsOwnPageOrStaffUser],
         'create': [IsAuthenticated],
         'update': [permissions.IsOwnPageOrReadOnly],
         'partial_update': [permissions.IsOwnPageOrReadOnly],
@@ -28,7 +28,10 @@ class PageViewSet(viewsets.ModelViewSet):
         'change_block': [permissions.IsStaffUser],
         'change_block_permanent': [permissions.IsAdminRole],
         'change_access': [permissions.IsOwnPageOrReadOnly],
-        'follow': [IsNotBlocked]
+        'follow': [IsNotBlocked],
+        'list_follow_requests': [permissions.IsOwnPageOrReadOnly],
+        'accept_follow_requests': [permissions.IsOwnPageOrReadOnly],
+        'accept_follow_request': [permissions.IsOwnPageOrReadOnly]
     }
 
     def perform_create(self, serializer):
@@ -40,6 +43,8 @@ class PageViewSet(viewsets.ModelViewSet):
         user = request.user
         if user == page.owner:
             return Response(data="You cant follow yourself!", status=status.HTTP_403_FORBIDDEN)
+        if user in page.followers.all() or user in page.follow_requests.all():
+            return Response(data="You already following this page!", status=status.HTTP_403_FORBIDDEN)
         if page.is_private:
             page.follow_requests.add(user)
             page.save()
@@ -47,6 +52,34 @@ class PageViewSet(viewsets.ModelViewSet):
         page.followers.add(user)
         page.save()
         return Response("You are following this page now!")
+
+    @action(detail=True, methods=['get'])
+    def list_follow_requests(self, request: Request, pk=None):
+        page = get_object_or_404(Page, pk=pk)
+        if not page.is_private:
+            return Response(data="You have no follow requests (your page is not private).")
+        serializer = self.serializer_class(page, partial=True)
+        return Response(data={"follow_requests": serializer.data["follow_requests"]})
+
+    @action(detail=True, methods=['patch'])
+    def accept_follow_requests(self, request: Request, pk=None):
+        page = get_object_or_404(Page, pk=pk)
+        if not page.is_private:
+            return Response(data="You have no follow requests (your page is not private).")
+        serializer = self.serializer_class(page, partial=True)
+        page.followers.set(page.followers.all() | page.follow_requests.all())
+        page.follow_requests.set([])
+        return Response(data=serializer.data)
+
+    @action(detail=True, methods=['patch'], url_path="accept_follow_request/(?P<follower_id>[^/.]+)")
+    def accept_follow_request(self, request: Request, pk=None, follower_id=None):
+        page = get_object_or_404(Page, pk=pk)
+        if not page.is_private:
+            return Response(data="You have no follow requests (your page is not private).")
+        serializer = self.serializer_class(page, partial=True)
+        page.followers.add(page.follow_requests.get(pk=follower_id))
+        page.follow_requests.remove(follower_id)
+        return Response(data=serializer.data)
 
     @action(detail=True, methods=['patch'])
     def change_access(self, request: Request, pk=None):
@@ -115,7 +148,7 @@ class PostViewSet(viewsets.ModelViewSet):
         'retrieve': [IsAuthenticated],
         'update': [permissions.IsOwnerOrReadOnly],
         'partial_update': [permissions.IsOwnerOrReadOnly],
-        'destroy': [permissions.IsOwnerOrStuffUser]
+        'destroy': [permissions.IsOwnerOrStaffUser]
     }
 
     def get_permissions(self):

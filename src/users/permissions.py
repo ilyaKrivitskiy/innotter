@@ -62,13 +62,13 @@ class IsStaffUser(CustomPermission):
         return request.user.is_staff or request.user.role in ("admin", "moderator")
 
 
-class IsOwnerOrStuffUser(CustomPermission):
+class IsOwnerOrStaffUser(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
         return request.user.is_staff or request.user.role in ("admin", "moderator") or obj == request.user
 
 
-class IsOwnPageOrStuffUser(CustomPermission):
+class IsOwnPageOrStaffUser(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
-        return request.user.is_staff or request.user.role in ("admin", "moderator") or obj.owner == request.user
+        return request.user.is_staff or obj.owner == request.user
