@@ -143,13 +143,25 @@ class PostViewSet(viewsets.ModelViewSet):
     authentication_classes = [JWTAuthentication]
 
     permission_classes_by_action = {
-        'create': [permissions.IsOwnerOrReadOnly],
+        'create': [permissions.IsNotBlocked],
         'list': [IsAuthenticated],
         'retrieve': [IsAuthenticated],
-        'update': [permissions.IsOwnerOrReadOnly],
-        'partial_update': [permissions.IsOwnerOrReadOnly],
-        'destroy': [permissions.IsOwnerOrStaffUser]
+        'update': [permissions.IsOwnPostOrReadOnly],
+        'partial_update': [permissions.IsOwnPostOrReadOnly],
+        'destroy': [permissions.IsOwnPostOrStaffUser],
+        'like_or_unlike': [permissions.IsOwnerOrStaffUser, IsNotBlocked]
     }
+
+    @action(detail=True, methods=['patch'])
+    def like_or_unlike(self, request, pk=None):
+        post = get_object_or_404(Post, pk=pk)
+        serializer = self.serializer_class(post, partial=True)
+        user = request.user
+        if user not in post.likes.all():
+            post.likes.add(user)
+        else:
+            post.likes.remove(user.id)
+        return Response(data=serializer.data)
 
     def get_permissions(self):
         try:

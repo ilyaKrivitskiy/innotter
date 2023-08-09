@@ -59,16 +59,32 @@ class IsNotBlocked(CustomPermission):
 class IsStaffUser(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
-        return request.user.is_staff or request.user.role in ("admin", "moderator")
+        return request.user.is_staff
 
 
 class IsOwnerOrStaffUser(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
-        return request.user.is_staff or request.user.role in ("admin", "moderator") or obj == request.user
+        return request.user.is_staff or obj == request.user
 
 
 class IsOwnPageOrStaffUser(CustomPermission):
 
     def has_object_permission(self, request: Request, view, obj):
         return request.user.is_staff or obj.owner == request.user
+
+
+class IsOwnPostOrReadOnly(CustomPermission):
+
+    def has_object_permission(self, request: Request, view, obj):
+        if request.method in SAFE_METHODS:
+            return True
+
+        return obj.page.owner == request.user
+
+
+class IsOwnPostOrStaffUser(CustomPermission):
+
+    def has_object_permission(self, request: Request, view, obj):
+        return request.user.is_staff or obj.page.owner == request.user
+
