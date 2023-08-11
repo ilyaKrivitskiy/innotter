@@ -12,13 +12,13 @@ from .models import User
 from pages.models import Page
 from rest_framework.request import Request
 from rest_framework.response import Response
-from .permissions import IsSuperUser, IsOwnerOrReadOnly, IsAdminRole, IsNotBlocked
+from .permissions import IsSuperUser, IsOwnerOrReadOnly, IsAdminRole, IsNotBlocked, IsOwnerOrStaffUser
 from .tokens import generate_access_token, generate_refresh_token
 
 
 class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
-    queryset = User.objects.all().order_by("id").values()
+    queryset = User.objects.all().order_by("id")
     authentication_classes = [JWTAuthentication]
 
     serializer_classes_by_action = {
@@ -30,8 +30,8 @@ class UserViewSet(viewsets.ModelViewSet):
         'list': [IsAuthenticated],
         'retrieve': [IsAuthenticated],
         'create': [IsSuperUser],
-        'update': [IsOwnerOrReadOnly],
-        'partial_update': [IsOwnerOrReadOnly],
+        'update': [IsOwnerOrStaffUser],
+        'partial_update': [IsOwnerOrStaffUser],
         'destroy': [IsSuperUser],
         'block_user': [IsAdminRole],
         'make_user_admin': [IsSuperUser],

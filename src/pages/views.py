@@ -139,7 +139,7 @@ class TagViewSet(viewsets.ModelViewSet):
 
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
-    queryset = Tag.objects.all()
+    queryset = Post.objects.all()
     authentication_classes = [JWTAuthentication]
 
     permission_classes_by_action = {
@@ -149,11 +149,12 @@ class PostViewSet(viewsets.ModelViewSet):
         'update': [permissions.IsOwnPostOrReadOnly],
         'partial_update': [permissions.IsOwnPostOrReadOnly],
         'destroy': [permissions.IsOwnPostOrStaffUser],
-        'like_or_unlike': [permissions.IsOwnerOrStaffUser, IsNotBlocked]
+        'like': [permissions.IsOwnerOrStaffUser, IsNotBlocked],
+        'reply': [IsNotBlocked]
     }
 
     @action(detail=True, methods=['patch'])
-    def like_or_unlike(self, request, pk=None):
+    def like(self, request, pk=None):
         post = get_object_or_404(Post, pk=pk)
         serializer = self.serializer_class(post, partial=True)
         user = request.user
@@ -161,6 +162,14 @@ class PostViewSet(viewsets.ModelViewSet):
             post.likes.add(user)
         else:
             post.likes.remove(user.id)
+        post.save()
+        return Response(data=serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def reply(self, request: Request, pk=None):
+        serializer = self.serializer_class(Post(), data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(reply_to=get_object_or_404(Post, pk=pk))
         return Response(data=serializer.data)
 
     def get_permissions(self):
