@@ -1,28 +1,30 @@
 version: "3.9"
 
 services:
-
   innotter_db:
     image: postgres:12.15
     restart: always
     container_name: innotter_db
+    volumes:
+      - ~/.pg/pg_data/usr/src/app:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_HOST=${DB_HOST}
     env_file:
       - .env
     ports:
-      - "5436"
+      - "5436:${DB_PORT}"
   innotter_project:
-    build: .
-    image: innotter:latest
-    container_name: innotter
-    volumes:
-      - .:/app
+    image: innotter_docker:latest
+    container_name: innotter_web
+    restart: always
     depends_on:
       - innotter_db
+    volumes:
+      - .:/app
     env_file:
       - .env
     ports:
-      - "8000:8080"
+      - "8080:8080"

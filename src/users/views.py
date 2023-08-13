@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from config.settings import SECRET_KEY, REFRESH_TOKEN_SECRET
+from . import permissions
 from .serializers import UserSerializer, UserSignUpSerializer
 from django.shortcuts import get_object_or_404
 from rest_framework import exceptions
@@ -12,7 +13,7 @@ from .models import User
 from pages.models import Page
 from rest_framework.request import Request
 from rest_framework.response import Response
-from .permissions import IsSuperUser, IsOwnerOrReadOnly, IsAdminRole, IsNotBlocked, IsOwnerOrStaffUser
+from .permissions import IsSuperUser, IsOwnerOrReadOnly, IsAdminRole, IsOwnerOrStaffUser
 from .tokens import generate_access_token, generate_refresh_token
 
 
@@ -27,15 +28,13 @@ class UserViewSet(viewsets.ModelViewSet):
     default_serializer_class = UserSerializer
 
     permission_classes_by_action = {
-        'list': [IsAuthenticated],
-        'retrieve': [IsAuthenticated],
+        'list': [permissions.IsStaffUser],
+        'retrieve': [permissions.IsNotBlockedAndAuthenticated],
         'create': [IsSuperUser],
-        'update': [IsOwnerOrStaffUser],
+        'update': [IsOwnerOrReadOnly],
         'partial_update': [IsOwnerOrStaffUser],
         'destroy': [IsSuperUser],
-        'block_user': [IsAdminRole],
-        'make_user_admin': [IsSuperUser],
-        'make_user_moderator': [IsAdminRole]
+        'block_user': [IsAdminRole]
     }
 
     def perform_create(self, serializer):
@@ -43,32 +42,13 @@ class UserViewSet(viewsets.ModelViewSet):
             serializer.save(is_staff=True)
 
     @action(detail=True, methods=['patch'])
-    def make_user_admin(self, request: Request, pk=None):
-        user = get_object_or_404(User, pk=pk)
-        user.role = user.Roles.ADMIN
-        user.is_staff = True
-        user.save()
-        return Response(data="This user has admin role now!")
-
-    @action(detail=True, methods=['patch'])
-    def make_user_moderator(self, request: Request, pk=None):
-        user = get_object_or_404(User, pk=pk)
-        user.role = user.Roles.MODERATOR
-        user.is_staff = True
-        user.save()
-        return Response(data="This user has moderator role now!")
-
-    @action(detail=True, methods=['patch'])
     def block_user(self, request: Request, pk=None):
         user = get_object_or_404(User, pk=pk)
         serializer = UserSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        if not user.is_blocked:
-            user.is_blocked = True
-            user.save(update_fields=["is_blocked", "unblock_date"])
-            return Response("The user has blocked!")
-        else:
-            return Response("The user is already blocked!")
+        user.is_blocked = True if not user.is_blocked else False
+        user.save(update_fields=["is_blocked", "unblock_date"])
+        return Response(data="The user block status just has changed!")
 
     def get_serializer_class(self):
         return self.serializer_classes_by_action.get(self.action, self.default_serializer_class)

@@ -3,36 +3,36 @@ from rest_framework.permissions import BasePermission, SAFE_METHODS
 from rest_framework.request import Request
 
 
-class CustomPermission(BasePermission):
+class IsNotBlockedAndAuthenticated(BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated
+        return request.user.is_authenticated and not request.user.is_blocked
 
 
-class IsSuperUser(CustomPermission):
+class IsSuperUser(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         return request.user.is_superuser
 
 
-class IsAdminRole(CustomPermission):
+class IsAdminRole(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         return request.user.role == "admin"
 
 
-class IsModeratorRole(CustomPermission):
+class IsModeratorRole(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         return request.user.role == "moderator"
 
 
-class IsUserRole(CustomPermission):
+class IsUserRole(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         return request.user.role == "user"
 
 
-class IsOwnerOrReadOnly(CustomPermission):
+class IsOwnerOrReadOnly(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         if request.method in SAFE_METHODS:
@@ -41,7 +41,7 @@ class IsOwnerOrReadOnly(CustomPermission):
         return obj == request.user
 
 
-class IsOwnPageOrReadOnly(CustomPermission):
+class IsOwnPageOrReadOnly(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         if request.method in SAFE_METHODS:
@@ -50,31 +50,25 @@ class IsOwnPageOrReadOnly(CustomPermission):
         return obj.owner == request.user
 
 
-class IsNotBlocked(CustomPermission):
-
-    def has_object_permission(self, request: Request, view, obj):
-        return not request.user.is_blocked
-
-
-class IsStaffUser(CustomPermission):
+class IsStaffUser(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         return request.user.is_staff
 
 
-class IsOwnerOrStaffUser(CustomPermission):
+class IsOwnerOrStaffUser(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         return request.user.is_staff or obj == request.user
 
 
-class IsOwnPageOrStaffUser(CustomPermission):
+class IsOwnPageOrStaffUser(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         return request.user.is_staff or obj.owner == request.user
 
 
-class IsOwnPostOrReadOnly(CustomPermission):
+class IsOwnPostOrReadOnly(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         if request.method in SAFE_METHODS:
@@ -83,8 +77,7 @@ class IsOwnPostOrReadOnly(CustomPermission):
         return obj.page.owner == request.user
 
 
-class IsOwnPostOrStaffUser(CustomPermission):
+class IsOwnPostOrStaffUser(IsNotBlockedAndAuthenticated):
 
     def has_object_permission(self, request: Request, view, obj):
         return request.user.is_staff or obj.page.owner == request.user
-
