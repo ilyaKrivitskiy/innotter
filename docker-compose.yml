@@ -2,11 +2,11 @@ version: "3.9"
 
 services:
   innotter_db:
-    image: postgres:12.15
+    image: postgres:15.4
     restart: always
     container_name: innotter_db
     volumes:
-      - ~/.pg/pg_data/usr/src/app:/var/lib/postgresql/data
+      - ~/.pg/pg_data/usr/src/app:/var/lib/postgresql/15/data
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework import routers
-from .views import UserViewSet, RegisterAPIView, LogoutAPIView, LoginAPIView, RefreshTokenAPIView
+from .views import UserViewSet
 
 user_router = routers.DefaultRouter(trailing_slash=False)
 user_router.register('users', UserViewSet, basename="users")
