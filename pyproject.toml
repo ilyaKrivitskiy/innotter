@@ -18,6 +18,7 @@ generics = "^6.0.0"
 pyjwt = "^2.8.0"
 djangorestframework-simplejwt = "^5.2.2"
 django-cors-headers = "^4.2.0"
+psycopg2-binary = "^2.9.9"
 
 
 [build-system]
