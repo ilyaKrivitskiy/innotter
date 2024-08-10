@@ -3,6 +3,7 @@ FROM python:3.8.10-buster
 #SHELL ["/bin/bash", "-c"]
 WORKDIR /app
 
+
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
