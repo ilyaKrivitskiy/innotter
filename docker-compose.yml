@@ -1,12 +1,10 @@
-version: "3.9"
-
 services:
   innotter_db:
     image: postgres:15.4
     restart: always
     container_name: innotter_db
     volumes:
-      - ~/.pg/pg_data/usr/src/app:/var/lib/postgresql/15/data
+      - pg_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -28,3 +26,6 @@ services:
       - .env
     ports:
       - "8080:8080"
+
+volumes:
+  pg_data:
