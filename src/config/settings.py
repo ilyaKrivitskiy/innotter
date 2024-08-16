@@ -31,7 +31,7 @@ DEBUG = os.environ.get("DEBUG")
 # STATIC_ROOT = 'static'
 # MEDIA_ROOT = 'media'
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
+ALLOWED_HOSTS = ["web-test.mtb.minsk.by", "localhost", "127.0.0.1", "0.0.0.0"]
 
 REFRESH_TOKEN_SECRET = os.environ.get('REFRESH_TOKEN_SECRET')
 
