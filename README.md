@@ -6,3 +6,5 @@ The stack:
 -Postgres
 -Poetry
 -Docker / Docker-compose
+-Nginx
+-Github actions
